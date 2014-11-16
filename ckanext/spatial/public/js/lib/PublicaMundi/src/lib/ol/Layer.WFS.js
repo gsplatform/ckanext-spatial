@@ -36,13 +36,10 @@
                             //dataType: 'gml',
                             context: this,
                             success: function(response) {
-                                //console.log('SUCCESS');
-                                //console.log(response);
                                 loadFeatures(response);
                             },
                             failure: function(response) {
-                                //console.log('FAILURE');
-                                //console.log(response);
+                                console.log(response);
                             }
                         } )
 
@@ -58,11 +55,9 @@
                 source: vectorSource, 
                 visible: options.visible,
                 strategy: ol.loadingstrategy.createTile(new ol.tilegrid.XYZ({
-                    maxZoom: 19,
+                    //maxZoom: 19,
                     //minZoom: 8
                 })),
-                //projection: 'EPSG:4326'
-               // })
             });
         
         

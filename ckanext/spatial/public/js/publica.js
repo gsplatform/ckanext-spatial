@@ -188,6 +188,7 @@ this.ckan.module('olpreview2', function (jQuery, _) {
 var parseWMSCapas = function(url, callback, failCallback) {
        
         var parser = new ol.format.WMSCapabilities();
+        //var response = null;
         $.ajax(url+"?service=WMS&request=GetCapabilities").then(function(response) {
             var response = parser.read(response);
             //console.log(response);
@@ -353,17 +354,19 @@ var withWMSLayers = function (resource, layerProcessor) {
     var popup;
     // TODO: handle click with overlay
     var onFeatureClick = function (features, pixel) {
-            //console.log('feature');
+            console.log('feature');
+            console.log(features);
             if (features) {
                 feature = features [0];
             }
-
+            
+            if (popup) {
             var element = popup.getElement();
-            //var element = popup;
               var coordinate = pixel;
+                  popup.setPosition(coordinate);
+            //var element = popup;
 
                 $(document.getElementById('popup')).popover('destroy');
-                  popup.setPosition(coordinate);
                   //popup.setLatLng([0, 0]);
                     // the keys are quoted to prevent renaming in ADVANCED_OPTIMIZATIONS mode.
                     var text;
@@ -373,7 +376,7 @@ var withWMSLayers = function (resource, layerProcessor) {
                     else {
                         text = JSON.stringify(feature);
                     }
-                       $(element).popover({
+                    $(element).popover({
                             'placement': 'top',
                             'animation': false,
                             'html': true,
@@ -381,7 +384,7 @@ var withWMSLayers = function (resource, layerProcessor) {
                         }).attr('data-original-title');
 
                     $(element).popover('show');
-
+            }
         };
 
 
@@ -435,12 +438,12 @@ var withWMSLayers = function (resource, layerProcessor) {
 
             // Popup showing the position the user clicked
             // Need to make this by using the API
-            //popup = this.map.addOverlay(document.getElementById('popup'))
+            popup = this.map.addOverlay(document.getElementById('popup'))
 
-            popup = new ol.Overlay({
-               element: document.getElementById('popup')
-               });
-               this.map._map.addOverlay(popup);
+            //popup = new ol.Overlay({
+            //   element: document.getElementById('popup')
+            //   });
+            //   this.map._map.addOverlay(popup);
                 
                $(document.getElementById('map-ol')).click(function() {
                     $(document.getElementById('popup')).popover('destroy');

@@ -23,7 +23,7 @@
         
         setLayerExtent: function() {
             var layer = this;
-            this._layer.once('load', function() {
+            this._layer.on('load', function() {
                 layer.getMap().setExtent(layer._extent, 'EPSG:4326');
             });
         },

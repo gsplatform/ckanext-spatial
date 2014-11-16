@@ -1,3 +1,3 @@
-Leaflet:	0.7.2
+Leaflet:	0.7.3
 
 OpenLayers:	v3.0.0

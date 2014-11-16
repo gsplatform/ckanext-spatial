@@ -20,20 +20,12 @@
             };
     
     PublicaMundi.Leaflet.Map = PublicaMundi.Class(PublicaMundi.Map, {
-        // Attempt to unify adding overlays
+        // Attempt to unify info overlays
         addOverlay: function(element) {
-            //console.log('in add overlay');
-            //});
-            //this._map.addOverlay(popup);
-            //return popup;
+            // TODO: Not yet supported for Leaflet
+            // overlays currently added without user control
             return null;
 
-            //popup = this.map.addOverlay(document.getElementById('popup'))
-
-            //popup = new ol.Overlay({
-            //   element: document.getElementById('popup')
-            //   });
-            //   this.map._map.addOverlay(popup);
         },
         initialize: function (options) {
             PublicaMundi.Map.prototype.initialize.call(this, options);
