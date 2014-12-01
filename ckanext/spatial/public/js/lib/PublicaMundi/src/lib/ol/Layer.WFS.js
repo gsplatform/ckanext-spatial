@@ -92,13 +92,10 @@
                             
                             //context: this,
                             success: function(response) {
-                                //console.log('SUCCESS');
-                                //console.log(response);
                                 loadFeatures(response);
                             },
                             failure: function(response) {
-                                //console.log('FAILURE');
-                                //console.log(response);
+                                console.log(response);
                             }
                         } )
 

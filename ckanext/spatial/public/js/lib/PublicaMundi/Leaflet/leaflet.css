@@ -297,8 +297,6 @@
 .leaflet-control-layers-expanded .leaflet-control-layers-list {
 	display: block;
 	position: relative;
-    overflow-y: scroll;
-    max-height: 350px;
 	}
 .leaflet-control-layers-expanded {
 	padding: 6px 10px 6px 6px;
@@ -318,6 +316,8 @@
 	border-top: 1px solid #ddd;
 	margin: 5px -10px 5px -6px;
 	}
+
+
 /* attribution and scale controls */
 
 .leaflet-container .leaflet-control-attribution {

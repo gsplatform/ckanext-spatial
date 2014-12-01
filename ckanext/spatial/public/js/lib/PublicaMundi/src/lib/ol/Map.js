@@ -10,6 +10,7 @@
     PublicaMundi.define('PublicaMundi.OpenLayers');
 
     PublicaMundi.OpenLayers.Map = PublicaMundi.Class(PublicaMundi.Map, {
+        // Attempt to unify info overlays
         addOverlay: function(element) {
             popup = new ol.Overlay({
                 element: element
@@ -35,9 +36,8 @@
                     if (extent[3] > 90.0) {
                         extent[3] = 89.0;
                     }
-                    //console.log(extent);
-                    //
                     transformation = ol.proj.transformExtent(extent, 'EPSG:4326', 'EPSG:3857');
+
             }
             else if (proj == 'EPSG:3857'){
                 transformation = extent;
@@ -45,10 +45,6 @@
             else {
                 transformation = null;
             }
-                //console.log('showing extent');
-                //console.log(transformation);
-                console.log(transformation);
-                console.log(this._map.getSize());
                 this._map.getView().fitExtent(transformation, this._map.getSize());
         },
         initialize: function (options) {
@@ -59,7 +55,6 @@
             } else {
                 this._map = new ol.Map({
                     target: options.target,
-                    //view: new ol.View2D({
                     view: new ol.View({
                         projection: options.projection,
                         center: options.center,
@@ -80,9 +75,6 @@
             this._clickHandlerRegisteredLayers = [];
             
             this._map.on('click', function(e) {
-                //console.log(e.coordinate);
-                //transformation = ol.proj.transform(e.coordinate, 'EPSG:3857', 'EPSG:4326');
-                //console.log(transformation);
             });
             if ((typeof options.layers !== 'undefined') && (PublicaMundi.isArray(options.layers))) {
                 for (var index = 0; index < options.layers.length; index++) {
@@ -147,8 +139,7 @@
                             this._map.forEachFeatureAtPixel(pixel, processFeature);
 
                             if (features.length > 0) {
-                                //handlers[l](features, pixel);
-                                
+                                // on map click return handler with features and coordinate information 
                                 handlers[l](features, e.coordinate);
                             }
                         }
@@ -158,7 +149,7 @@
                     this._map.on('singleclick', this._clickHandlerMap, this);
                 }
             }
-            
+        
 
         },
         _setLayerControl: function(control) {
@@ -177,12 +168,7 @@
         _listen: function() {
             var map = this;
             var idx = 0;
-            //console.log('listening');
             this._setLayerControl(this._map.getLayers()[0]);
-            //this._map.on('layeradd', function() {
-            //    console.log('layer added');
-            //    this._setLayerExtent();
-            //});
 
             this._map.on('moveend', function() {
                 map._setViewBox();

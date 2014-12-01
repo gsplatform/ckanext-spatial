@@ -22,7 +22,9 @@
         },
         setLayerExtent: function() {
             var layer = this;
-            this._map.setExtent(layer._extent, 'EPSG:4326');
+            //this._layer.once('layeradd', function(){
+                this._map.setExtent(layer._extent, 'EPSG:4326');
+            //});
         },
         update: function() { 
             var bbox = this._map._getViewBox();
@@ -32,10 +34,10 @@
                 dataType: 'json',
                 context: this,
                 success: function (response) {
-                    //console.log('SUCCESS');
-                    //console.log(response);
                     this._layer.clearLayers();
                     this._layer.addData(response);
+
+
                 }
             });
         },
@@ -72,6 +74,12 @@
                         layer.on({
                             click: onClick
                         });
+                    if (feature.properties.name){
+                        layer.bindPopup(feature.properties.name);    
+                    }
+                    else {
+                        layer.bindPopup(JSON.stringify(feature));
+                    }
                     }
 
                 }
