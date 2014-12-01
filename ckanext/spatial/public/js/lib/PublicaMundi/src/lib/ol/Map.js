@@ -36,7 +36,8 @@
                         extent[3] = 89.0;
                     }
                     //console.log(extent);
-                    transformation = ol.proj.transform(extent, 'EPSG:4326', 'EPSG:3857');
+                    //
+                    transformation = ol.proj.transformExtent(extent, 'EPSG:4326', 'EPSG:3857');
             }
             else if (proj == 'EPSG:3857'){
                 transformation = extent;
@@ -46,6 +47,8 @@
             }
                 //console.log('showing extent');
                 //console.log(transformation);
+                console.log(transformation);
+                console.log(this._map.getSize());
                 this._map.getView().fitExtent(transformation, this._map.getSize());
         },
         initialize: function (options) {
@@ -64,7 +67,8 @@
                         maxZoom: options.maxZoom,
                         minZoom: options.minZoom
                     }),
-                    controls: ol.control.defaults().extend([
+                    controls: ol.control.defaults({ 
+                        rotate:false}).extend([
                     ]),
                     ol3Logo: false
                 });

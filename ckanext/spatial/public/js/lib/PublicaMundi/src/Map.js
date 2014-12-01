@@ -90,6 +90,7 @@
                             options.projection = this.getProjection();
                         }
                         layer = PublicaMundi.registry.createLayer(options);
+                        
                         layer.setMap(this);
                     }
                     if (layer) {

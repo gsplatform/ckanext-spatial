@@ -224,7 +224,6 @@
             } else {
                 this._factories[index] = factory;
             }
-
             return factory;
         },
         unregister: function (type) {
