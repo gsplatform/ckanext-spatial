@@ -69,8 +69,18 @@
                  var vectorSource = new ol.source.ServerVector({
                     format: format,
                     projection: projection,
+                    //strategy: function() {
+                    //                    return [ [-8473015.930372493, 5673984.22207263, -8430593.37967422, 5704559.033386701] ];
+                    //                                    },
+                    //strategy: ol.loadingstrategy.bbox,
+                    strategy: ol.loadingstrategy.createTile(new ol.tilegrid.XYZ({
+                        //maxZoom: 19,
+                        //minZoom: 8
+                    })),
+
                     loader: function(extent, resolution, proj) {
-                         console.log('proj=');
+                        console.log('LOADER'); 
+                        console.log('proj=');
                          console.log(proj);
                          console.log(projection);
                          console.log('ext=');
@@ -101,17 +111,17 @@
             });
 
             var loadFeatures = function(response) {
-                console.log(response);
+                //console.log(response);
 
-                console.log('projection');
-                console.log(projection);
-                console.log('format');
-                console.log(output_format);
-                console.log('version');
-                console.log(version);
+                //console.log('projection');
+                //console.log(projection);
+                //console.log('format');
+                //console.log(output_format);
+                //console.log('version');
+                //console.log(version);
 
                 //var proj = { dataProjection: 'EPSG:900913', featureProjection: 'EPSG:900913'};
-                console.log(projection);
+                //console.log(projection);
                 var proj = { dataProjection: projection, featureProjection: 'EPSG:3857'};
                 //var proj = {};
                 //console.log(vectorSource.readFeatures(response,  proj));
@@ -128,12 +138,7 @@
                 title: options.title,
                 source: vectorSource, 
                 visible: options.visible,
-                //strategy: ol.loadingstrategy.bbox(ext, res),
-                strategy: ol.loadingstrategy.createTile(new ol.tilegrid.XYZ({
-                    maxZoom: 19,
-                    //minZoom: 21
-                })),
-                projection: projection,
+                                projection: projection,
                 //projection: 'EPSG:3857',
                // })
             });

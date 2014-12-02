@@ -230,7 +230,8 @@ this.ckan.module('olpreview2', function (jQuery, _) {
                         else if (resource.name.startsWith(title)){
                             visibility = true;
                         }
-                        
+                       
+                        console.log('information');
                         console.log(candidate);
                         console.log(bbox);
                         var bboxfloat = extractBbox(bbox);
@@ -244,7 +245,7 @@ this.ckan.module('olpreview2', function (jQuery, _) {
                             bbox: bboxfloat,
                             visible: visibility,
                             params: {'LAYERS': name,
-                                     'TRANSPARENT': 'TRUE',
+                                     //'TRANSPARENT': 'TRUE',
                                     'VERSION': version},
                         };
 

@@ -32,17 +32,32 @@
             console.log(projection);
             
             var format = new ol.format.WFS({
+                                    //featureNS: 'ogr',
+                                    //featureType: 'poi_thessalonikis',
                                     //featureNS: (options.featureNS ? layer.featureNS : undefined),
                                     //featureType: (options.featureType ? layer.featureType : undefined),
-                                    gmlFormat: new ol.format.GML3()
+                                    gmlFormat: new ol.format.GML3(),
+                                    extractAttributes: 'False',
+                                    //geometryName: 'geometryProperty'
                     });
 
             var vectorSource = new ol.source.ServerVector({
+            //var vectorSource = new ol.source.StaticVector({
                     //format: new ol.format.GeoJSON(),
                     format: format,
                     projection: projection,
+                    //url: options.url,
                     //projection: 'EPSG:3857',
                      //url: options.url,
+                    //strategy: ol.loadingstrategy.bbox,
+                   // strategy: ol.loadingstrategy.createTile(new ol.tilegrid.XYZ({
+                   // })),
+
+                //strategy: function() {
+                                        //return [ [-8473015.930372493, 5673984.22207263, -8430593.37967422, 5704559.033386701] ];
+                //                        return [ [-2000000, -5000000, 2000000, 5000000 ]];
+                //                                        },
+
                 loader: function(extent, resolution, proj) {
                         console.log('proj=');
                         console.log(proj);
@@ -73,7 +88,7 @@
                         }
                     } )
 
-                     },
+                     }, 
                     });
 
             this._layer = new ol.layer.Vector({
@@ -81,45 +96,31 @@
                 source: vectorSource, 
                 //visible: options.visible,
                 visible: true,
-                //strategy: ol.loadingstrategy.bbox,
                 projection: projection,
                 });
 
             var loadFeatures = function(response) {
                 console.log('readfeatures');
-                console.log(response);
                 //var proj = { dataProjection: 'EPSG:900913', featureProjection: 'EPSG:900913'};
-                console.log(projection);
                 var proj = { dataProjection: 'EPSG:2100', featureProjection: 'EPSG:2100'};
                 //var proj = {};
                 //console.log(vectorSource.readFeatures(response,  proj));
                 //console.log(vectorSource.readFeatures(response));
                 //vectorSource.addFeatures(vectorSource.readFeatures(response));
-                console.log(format.readFeatures(response, proj));
-                vectorSource.addFeatures(format.readFeatures(response, proj));
+                console.log(vectorSource.readFeatures(response));
+                vectorSource.addFeatures(vectorSource.readFeatures(response));
                 }
-
-
-                //projection:
-                //strategy: ol.loadingstrategy.createTile(new ol.tilegrid.XYZ({
-                //    maxZoom: 19,
-                    //minZoom: 8
-                //})),
-                //projection: 'EPSG:4326'
-               // })
-           // });
-        
-        
-            
-
-
 
 
         },
         setLayerExtent: function() {
             var layer = this;
             this._layer.once('postcompose', function() {
+                console.log('postcompose');
+                console.log(layer._extent);
+                console.log(this.getSource().getExtent());
                 layer._extent = this.getSource().getExtent();
+                console.log(layer._extent);
                 layer.getMap().setExtent(layer._extent, 'EPSG:3857');
             });
         },
