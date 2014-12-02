@@ -22,7 +22,8 @@
             PublicaMundi.Layer.prototype.initialize.call(this, options);
             this._map = null;
             this._type = null;
-            var version = options.version ? options.version : '';
+            var version = options.version ? '&version=' + options.version : '';
+            var maxFeatures = options.maxFeatures ? '&maxFeatures='+options.maxFeatures : '';
             
             
             // Set JSON as preferable transfer format
@@ -63,14 +64,9 @@
             else if ( projection == 'EPSG:26713'){
                     projection = 'EPSG:3857';
                 }
-            
-            console.log('projection');
-            console.log(projection);
-            console.log('format');
-            console.log(output_format);
-            console.log('version');
-            console.log(version);
-            var vectorSource = new ol.source.ServerVector({
+            var ext;
+            var res;
+                 var vectorSource = new ol.source.ServerVector({
                     format: format,
                     projection: projection,
                     loader: function(extent, resolution, proj) {
@@ -79,10 +75,12 @@
                          console.log(projection);
                          console.log('ext=');
                          console.log(extent);
+                         ext = extent;
+                         res = resolution;
                         $.ajax({
                             type: "GET",
                             //url: options.url+  '?service=WFS&request=GetFeature&typename='+options.name+'&srsname=EPSG:4326&outputFormat=json' +
-                            url: options.url+  '?service=WFS&request=GetFeature&typename='+options.name+ '&srsname='+projection + '&outputFormat='+ output_format +  '&bbox=' + extent.join(',')+ ',EPSG:3857' + '&maxFeatures=' + options.maxFeatures + '&version=1.1.0',
+                            url: options.url+  '?service=WFS&request=GetFeature&typename='+options.name+ '&srsname='+projection + '&outputFormat='+ output_format +  '&bbox=' + extent.join(',')+ ',EPSG:3857' +  maxFeatures + version,
                             //'&maxFeatures=' + options.maxFeatures + '&version=' + version 
                             //'&format_options=callback:loadFeatures',
                             //dataType: 'jsonp',
@@ -104,6 +102,14 @@
 
             var loadFeatures = function(response) {
                 console.log(response);
+
+                console.log('projection');
+                console.log(projection);
+                console.log('format');
+                console.log(output_format);
+                console.log('version');
+                console.log(version);
+
                 //var proj = { dataProjection: 'EPSG:900913', featureProjection: 'EPSG:900913'};
                 console.log(projection);
                 var proj = { dataProjection: projection, featureProjection: 'EPSG:3857'};
@@ -113,22 +119,22 @@
                 //console.log(format.readFeatures(response)[0].values_.boundedBy);
                 //console.log(format.readFeatures(response , proj));
                 //console.log(format.readFeatures(response, proj));
-                //vectorSource.addFeatures(format.readFeatures(response, proj));
-                console.log(format);
                 vectorSource.addFeatures(format.readFeatures(response));
+                //console.log(format);
+                //vectorSource.addFeatures(format.readFeatures(response));
                 }
 
             this._layer = new ol.layer.Vector({
                 title: options.title,
                 source: vectorSource, 
                 visible: options.visible,
-                //strategy: ol.loadingstrategy.bbox,
+                //strategy: ol.loadingstrategy.bbox(ext, res),
                 strategy: ol.loadingstrategy.createTile(new ol.tilegrid.XYZ({
-                //    maxZoom: 19,
-                //    minZoom: 12
+                    maxZoom: 19,
+                    //minZoom: 21
                 })),
-                //projection: projection,
-                projection: 'EPSG:3857',
+                projection: projection,
+                //projection: 'EPSG:3857',
                // })
             });
         

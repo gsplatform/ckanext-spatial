@@ -36,7 +36,6 @@
             this._layer.once('postcompose', function() {
                 console.log('postcompose');
                 console.log(layer._extent);
-                console.log(layer.getMap());
                 layer.getMap().setExtent(layer._extent, 'EPSG:4326');
             });
 

@@ -5,43 +5,10 @@ this.ckan.module('olpreview2', function (jQuery, _) {
 
     var proxy = false;
     var GEOSERVER_URL = "http://geoserver.dev.publicamundi.eu:8080/geoserver";
-
     
     
-    var createKMLLayer = function (resource) {
-        var url = resource.proxy_url || resource.url
-
-        var kml = {
-                title: 'KML',
-                type: PublicaMundi.LayerType.KML,
-                url: url,
-                click: onFeatureClick
-        }
-
-        return kml;
-    }
-
-
-    var createGMLLayer = function (resource) {
-        var url = resource.proxy_url || resource.url
-        
-        var gml = {
-            title: 'GML',
-            featureNS: undefined,
-            featureType: undefined,
-            type: PublicaMundi.LayerType.GML,
-            url: url,
-            click: onFeatureClick,
-            //projection: resource.projection? resource.projection: 'EPSG:3857',
-            //projection: 'EPSG:2100',
-            //projection: 'EPSG:4326'
-        }
-        return gml;
-        //TODO styles
-
-        //return gml
-    }
-
+    
+    
     var parseWFSCapas = function(resource, url, callback, failCallback) {
         
         $.ajax(url+"?service=WFS&request=GetCapabilities").then(function(response) {
@@ -58,23 +25,9 @@ this.ckan.module('olpreview2', function (jQuery, _) {
             var version = response["wfs:WFS_Capabilities"]["@attributes"]["version"];
             
             var format_vals = response["wfs:WFS_Capabilities"]["ows:OperationsMetadata"]["ows:Operation"];
-            console.log(format_vals);
-            console.log('looking...');
-            /*
-            for (var i=0; i<format.length; i++){
-                if (format[i]["@attributes"] == 'GetFeature'){
-                    var t = format[i]["ows:Parameter"];
-                    console.log(t);
-                    for (var k =0; k<t.length; k++){
-                        if (t[k]["@attributes"] == 'outputFormat'){
-                            console.log('found!');
-                            console.log(t[k]["ows:AllowedValues"]);
-                        }
-                    }
-                }
-            } */
+           
+            // Check output formats
             getValue(format_vals, "outputFormat");
-            console.log(outputFormat);
 
             var format;
             if (outputFormat.indexOf('json') > -1 || outputFormat.indexOf('application/json') > -1){
@@ -93,9 +46,7 @@ this.ckan.module('olpreview2', function (jQuery, _) {
                 console.log('PublicaMundi GEOSERVER');
                 if (resource.vectorstorer_resource){
                     var found = false;
-                    //console.log('candidates');
                     $_.each(candidates, function(candidate, idx) {
-                        //console.log(candidate["Name"]["#text"]);
                         if (candidate["Name"]["#text"] == resource.wfs_layer){
                             candidates = candidate;
                             found = true;
@@ -111,7 +62,6 @@ this.ckan.module('olpreview2', function (jQuery, _) {
                 }
             };
 
-            //console.log(version); 
             callback(candidates, version, format);
 
         });
@@ -134,25 +84,18 @@ this.ckan.module('olpreview2', function (jQuery, _) {
                 var count = candidates.length;
 
                 $_.each(candidates, function(candidate, idx) {
-                    // TODO: Need to implement this in a better way
-                    //console.log('wfs item');
-                    //console.log(candidate);
 
-                    //json = xmlToJson(candidate);
-                    //console.log(json);
                     var title = candidate["Title"];
                     if (typeof title === "undefined") {
                         title = candidate["wfs:Title"];
                     }
                     title = title["#text"];
-                    //console.log(title);
                     
                     var name = candidate["Name"];
                     if (typeof name === "undefined") {
                         name = candidate["wfs:Name"];
                     }
                     name = name["#text"];
-                    //console.log(name);
                     
                     var bbox = candidate["WGS84BoundingBox"];
                     var lc = null;
@@ -166,10 +109,12 @@ this.ckan.module('olpreview2', function (jQuery, _) {
                         lc = bbox['LowerCorner']["#text"];
                         uc = bbox['UpperCorner']["#text"];
                     }
-
+                    
+                    if (typeof bbox !== "undefined") {
                         lc = lc.split(' ');
                         uc = uc.split(' ');
                         bboxfloat = [ parseFloat(lc[0]), parseFloat(lc[1]), parseFloat(uc[0]), parseFloat(uc[1]) ];
+                    }
 
                 var crs = null;
                 if (candidate["DefaultCRS"]){
@@ -177,7 +122,7 @@ this.ckan.module('olpreview2', function (jQuery, _) {
                     var crs_arr = crs_raw.split(":");
                     crs = crs_arr[crs_arr.length-3]+":"+crs_arr[crs_arr.length-1];
                 }
-               // moved inside api
+               // moved this to api
                 // if ( crs == 'EPSG:26713'){
                //     crs = 'EPSG:3857';
                // }
@@ -206,9 +151,10 @@ this.ckan.module('olpreview2', function (jQuery, _) {
                     format: format,
                     bbox: bboxfloat,
                     //projection: crs,
+                    //version: '1.1.0',
                     version: version,
                     url: url,
-                    maxFeatures: '100',
+                    //maxFeatures: '10',
                 };
             
                 layerProcessor(ftLayer)
@@ -218,17 +164,17 @@ this.ckan.module('olpreview2', function (jQuery, _) {
              })
 }
 
-var parseWMSCapas = function(resource, url, callback, failCallback) {
+    var parseWMSCapas = function(resource, url, callback, failCallback) {
        
+        //TODO: implement without using ol.format (see WFS parsing)
         var parser = new ol.format.WMSCapabilities();
-        //var response = null;
+        
         $.ajax(url+"?service=WMS&request=GetCapabilities").then(function(response) {
             var response = parser.read(response);
             console.log(response);
             var version = response["version"];
             var candidates = response["Capability"]["Layer"]["Layer"];
-            console.log('parsing');
-            console.log(resource.url);
+            
             if (resource.url.startsWith(GEOSERVER_URL)){
                 console.log('PublicaMundi GEOSERVER');
                 if (resource.vectorstorer_resource){
@@ -254,68 +200,131 @@ var parseWMSCapas = function(resource, url, callback, failCallback) {
         });
     }
 
-var withWMSLayers = function (resource, layerProcessor) {
-    console.log('wms');
-    console.log(resource);
-    var parsedUrl = resource.url.split('#')
-    var urlBody = parsedUrl[0].split('?')[0] // remove query if any
-    var url = resource.proxy_service_url || urlBody
+    var withWMSLayers = function (resource, layerProcessor) {
+        
+        var parsedUrl = resource.url.split('#')
+        var urlBody = parsedUrl[0].split('?')[0] // remove query if any
+        var url = resource.proxy_service_url || urlBody
 
-    var layerName = parsedUrl.length>1 && parsedUrl[1]
-    parseWMSCapas(
-        resource,
-        url,
-        function(candidates, version) {
-            var count = candidates.length;
+        var layerName = parsedUrl.length>1 && parsedUrl[1]
+       
+        parseWMSCapas(
+            resource,
+            url,
+            function(candidates, version) {
+                var count = candidates.length;
 
-            if (layerName) candidates = candidates.filter(function(layer) {return layer.name == layerName})
-            
-                $_.each(candidates, function(candidate, idx) {
-            
-                var title = candidate["Title"];
-                var name = candidate["Name"];
-                var bbox = candidate["BoundingBox"];
+                    // Parse each WMS layer found
+                    $_.each(candidates, function(candidate, idx) {
+                        var title = candidate["Title"];
+                        var name = candidate["Name"];
+                        var bbox = candidate["BoundingBox"];
 
-                console.log('bbox');
-                console.log(bbox);
+                        var visibility = false;
+                        // If only 1 layer available then make it visible on load
+                        if (count == 1){
+                            visibility = true;
+                        }
                     
-                var visibility = false;
-                // If only 1 layer available then make it visible on load
-                if (count == 1){
-                    visibility = true;
-                }
-               
-                // If there is a layer that matches part of the resource title then make it visible on load
-                if (resource.name.startsWith(title)){
-                    visibility = true;
-                }
+                        // If there is a layer that matches part of the resource title then make it visible on load
+                        else if (resource.name.startsWith(title)){
+                            visibility = true;
+                        }
+                        
+                        console.log(candidate);
+                        console.log(bbox);
+                        var bboxfloat = extractBbox(bbox);
+                        console.log(bboxfloat);
+                        
+                        var mapLayer = {
+                            type: PublicaMundi.LayerType.WMS,
+                            url: urlBody, // use the original URL for the getMap, as there's no need for a proxy for image request
+                            name: name,
+                            title: title,
+                            bbox: bboxfloat,
+                            visible: visibility,
+                            params: {'LAYERS': name,
+                                     'TRANSPARENT': 'TRUE',
+                                    'VERSION': version},
+                        };
 
-                //var bboxfloat=null;
-                //$_.each(bbox, function(at, idx) {
-                var bboxfloat = extractBbox(bbox);
-                //    });
-                console.log('bboxfloat');
-                console.log(bboxfloat);
-                
-                var mapLayer = {
-                    type: PublicaMundi.LayerType.WMS,
-                    url: urlBody, // use the original URL for the getMap, as there's no need for a proxy for image request
-                    //transparent: true,
-                    name: name,
-                    title: title,
-                    bbox: bboxfloat,
-                    visible: visibility,
-                    params: {'LAYERS': name,
-                             'VERSION': version},
-                };
+                        layerProcessor(mapLayer)
+                        })
 
-                layerProcessor(mapLayer)
-                })
+                    }
+                )
 
-                }
-            )
+        }
+    
+    var createKMLLayer = function (resource) {
+        var url = resource.proxy_url || resource.url
+
+        var kml = {
+                title: 'KML',
+                type: PublicaMundi.LayerType.KML,
+                url: url,
+                click: onFeatureClick
+        }
+
+        return kml;
+    }
+
+
+    var createGMLLayer = function (resource) {
+        var url = resource.proxy_url || resource.url
+        
+        var gml = {
+            title: 'GML',
+            featureNS: undefined,
+            featureType: undefined,
+            type: PublicaMundi.LayerType.GML,
+            url: url,
+            click: onFeatureClick,
+        }
+        return gml;
+        //TODO styles
 
     }
+
+ 
+
+    var createGeoJSONLayer = function (resource) {
+        
+        var url = resource.proxy_url || resource.url
+        
+        var geojson = {
+            title: 'GeoJson',
+            type: PublicaMundi.LayerType.GeoJSON,
+            url: url,
+            visible: false,
+            click: onFeatureClick
+
+        };
+
+        //TODO add styles
+        return geojson
+    }
+
+   
+
+    var layerExtractors = {
+        'kml': function(resource, layerProcessor) {layerProcessor(createKMLLayer(resource))},
+        'gml': function(resource, layerProcessor) {layerProcessor(createGMLLayer(resource))},
+        'geojson': function(resource, layerProcessor) {layerProcessor(createGeoJSONLayer(resource))},
+        'wfs': withFeatureTypesLayers,
+        'wms': withWMSLayers,
+    }
+
+    var withLayers = function(resource, layerProcessor) {
+        var resourceUrl = resource.url
+        var proxiedResourceUrl = resource.proxy_url
+        var proxiedServiceUrl = resource.proxy_service_url
+
+        var withLayers = layerExtractors[resource.format && resource.format.toLocaleLowerCase()]
+        withLayers && withLayers(resource, layerProcessor)
+    }
+
+    //
     // Helper functions 
     //
     
@@ -363,53 +372,15 @@ var withWMSLayers = function (resource, layerProcessor) {
                     bboxtemp = [ at["extent"][0], at["extent"][1], at["extent"][2], at["extent"][3] ];
                     //return bboxfloat;
                 }
-            //console.log(bboxfloat);
-            console.log(bboxtemp);
-            //else {
-                //null;
-            //}
         });
         return bboxtemp;
-
-    }
-    var createGeoJSONLayer = function (resource) {
-        
-        var url = resource.proxy_url || resource.url
-        
-            var geojson = {
-                title: 'GeoJson',
-                type: PublicaMundi.LayerType.GeoJSON,
-                url: url,
-                visible: false,
-                click: onFeatureClick
-
-        };
-
-        //TODO add styles
-        return geojson
     }
 
-   
-
-    var layerExtractors = {
-        'kml': function(resource, layerProcessor) {layerProcessor(createKMLLayer(resource))},
-        'gml': function(resource, layerProcessor) {layerProcessor(createGMLLayer(resource))},
-        'geojson': function(resource, layerProcessor) {layerProcessor(createGeoJSONLayer(resource))},
-        'wfs': withFeatureTypesLayers,
-        'wms': withWMSLayers,
-    }
-
-    var withLayers = function(resource, layerProcessor) {
-        var resourceUrl = resource.url
-        var proxiedResourceUrl = resource.proxy_url
-        var proxiedServiceUrl = resource.proxy_service_url
-
-        var withLayers = layerExtractors[resource.format && resource.format.toLocaleLowerCase()]
-        withLayers && withLayers(resource, layerProcessor)
-    }
+    
+    // Handle click with overlay
+    
     var info;
     var popup;
-    // TODO: handle click with overlay
     var onFeatureClick = function (features, pixel) {
             console.log('feature');
             console.log(features);
@@ -421,18 +392,23 @@ var withWMSLayers = function (resource, layerProcessor) {
             var element = popup.getElement();
               var coordinate = pixel;
                   popup.setPosition(coordinate);
-            //var element = popup;
-
-                $(document.getElementById('popup')).popover('destroy');
-                  //popup.setLatLng([0, 0]);
-                    // the keys are quoted to prevent renaming in ADVANCED_OPTIMIZATIONS mode.
+                
+                  $(document.getElementById('popup')).popover('destroy');
+                    
+                    // Display name if found, else display full object if json, else display nothing
                     var text;
+                    console.log(feature);
+                    console.log(typeof(feature));
                     if (feature['name']) { 
                         text =feature['name'];
                     }
-                    else {
+                    else //if (typeof(feature) == 'Object')
+                    {
                         text = JSON.stringify(feature);
                     }
+                    //else {
+                    //    text = '';
+                    //}
                     $(element).popover({
                             'placement': 'top',
                             'animation': false,
@@ -444,12 +420,11 @@ var withWMSLayers = function (resource, layerProcessor) {
             }
         };
 
-
     return {
-        options: {
-            i18n: {
-            }
-        },
+       // options: {
+       //     i18n: {
+       //     }
+       // },
 
         initialize: function () {
             jQuery.proxyAll(this, /_on/);
@@ -495,7 +470,7 @@ var withWMSLayers = function (resource, layerProcessor) {
             this.map = PublicaMundi.map(options);
                 
             // Popup showing the position the user clicked
-            // Need to make this by using the API
+            // TODO: make this accessible through the API
             popup = this.map.addOverlay(document.getElementById('popup'))
 
             //popup = new ol.Overlay({
@@ -506,8 +481,7 @@ var withWMSLayers = function (resource, layerProcessor) {
                $(document.getElementById('map-ol')).click(function() {
                     $(document.getElementById('popup')).popover('destroy');
             });
-            //console.log('map');
-            //console.log(this.map);
+            
             withLayers(preload_resource, $_.bind(this.addLayer, this))
         }
     }

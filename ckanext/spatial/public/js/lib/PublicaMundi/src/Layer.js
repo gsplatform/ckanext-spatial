@@ -11,7 +11,7 @@
             this._map = null;
             this._type = null;
             this._layer = null;
-            this._extent = options.bbox || [180,90,-180,-90];
+            this._extent = options.bbox || null;
             this._options = options || {};
         },
         setMap: function(map) {
