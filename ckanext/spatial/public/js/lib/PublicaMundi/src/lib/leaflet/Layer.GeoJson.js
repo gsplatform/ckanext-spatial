@@ -17,10 +17,13 @@
     PublicaMundi.define('PublicaMundi.Leaflet.Layer');
     var popup;
     PublicaMundi.Leaflet.Layer.GeoJson = PublicaMundi.Class(PublicaMundi.Layer, {
-        addToControl: function() { 
-            this._map._getLayerControl().addOverlay(this._layer, this._options.title);
+        _addToControl: function() { 
+            if (this._map.getLayerControl()){
+                this._map.getLayerControl().addOverlay(this._layer, this._options.title);
+                }
             },
-        setLayerExtent: function() {
+        // TODO: not yet supported
+        fitToMap: function() {
             var layer = this;
            
              this._layer.on('layeradd', function() {
@@ -40,8 +43,8 @@
             if (PublicaMundi.isFunction(options.click)) {
                 onClick = function (e) {
                     options.click([e.target.feature.properties], [e.latlng.lat * (6378137), e.latlng.lng* (6378137)]);
-                }
                 };
+                }
             
             this._layer = L.geoJson(null, {
 
@@ -67,7 +70,7 @@
                         layer.on({
                             click: onClick
                         });
-                    layer.bindPopup(feature.properties.name);    
+                    //layer.bindPopup(feature.properties.name);    
                     }
                 },
                 
@@ -81,7 +84,7 @@
                 success: function (response) {
                     this._layer.addData(response);
                     
-                    // TODO: the following needs to be executed in setLayerExtent
+                    // TODO: the following needs to be executed in fitToMap
                     // Leaflet fires layer add event for each feature in geojson
                     var currextent = this._layer.getBounds();
                     var southWest = currextent.getSouthWest();

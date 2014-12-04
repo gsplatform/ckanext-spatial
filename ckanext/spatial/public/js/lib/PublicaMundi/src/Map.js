@@ -11,6 +11,7 @@
             this._layers = [];
             this._control = null;
             this._viewbox = '0,0,0,0';
+            this._popup = null;
 
             options = options || {};
             options.target = (PublicaMundi.isDefined(options.target) ? options.target : null);
@@ -28,14 +29,17 @@
         _getViewBox: function() { 
             return this._viewbox;
         },
-        _setLayerControl: function(c) {
+        setLayerControl: function(c) {
             return this;
         },
-        _getLayerControl: function() {
+        getLayerControl: function() {
             return this._control;
         },
         getMap: function () {
             return this._map;
+        },
+        getOverlay: function(){
+            return this._popup;
         },
         setCenter: function (x, y) {
             return this;

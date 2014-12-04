@@ -148,13 +148,15 @@ this.ckan.module('olpreview2', function (jQuery, _) {
                     visible: visibility,
                     type: PublicaMundi.LayerType.WFS,
                     click: onFeatureClick,
-                    format: format,
-                    bbox: bboxfloat,
-                    //projection: crs,
-                    //version: '1.1.0',
-                    version: version,
                     url: url,
-                    //maxFeatures: '10',
+                    bbox: bboxfloat,
+                    params: { 
+                            'format': format,
+                            'version': version,
+                            'layers': name, 
+                            //'projection': crs,
+                            //'maxFeatures': '10',
+                    } 
                 };
             
                 layerProcessor(ftLayer)
@@ -236,7 +238,8 @@ this.ckan.module('olpreview2', function (jQuery, _) {
                         console.log(bbox);
                         var bboxfloat = extractBbox(bbox);
                         console.log(bboxfloat);
-                        
+                        console.log('version');
+                        console.log(version);
                         var mapLayer = {
                             type: PublicaMundi.LayerType.WMS,
                             url: urlBody, // use the original URL for the getMap, as there's no need for a proxy for image request
@@ -244,9 +247,11 @@ this.ckan.module('olpreview2', function (jQuery, _) {
                             title: title,
                             bbox: bboxfloat,
                             visible: visibility,
-                            params: {'LAYERS': name,
+                            params: {'layers': name,
                                      //'TRANSPARENT': 'TRUE',
-                                    'VERSION': version},
+                                    'VERSION': version
+                            
+                            },
                         };
 
                         layerProcessor(mapLayer)
@@ -380,7 +385,6 @@ this.ckan.module('olpreview2', function (jQuery, _) {
     
     // Handle click with overlay
     
-    var info;
     var popup;
     var onFeatureClick = function (features, pixel) {
             console.log('feature');
@@ -412,7 +416,7 @@ this.ckan.module('olpreview2', function (jQuery, _) {
                     //}
                     $(element).popover({
                             'placement': 'top',
-                            'animation': false,
+                            'animation': true,
                             'html': true,
                             'content': text
                         }).attr('data-original-title');
@@ -436,17 +440,15 @@ this.ckan.module('olpreview2', function (jQuery, _) {
             
             var layer = this.map.createLayer(resourceLayer);
             // set map extent on layer bounds
-            layer.setLayerExtent();
+            layer.fitToMap();
         
         },
 
         _onReady: function () {
 
             var mapDiv = $("<div></div>").attr("id", "map-ol").addClass("map")
-            info = $("<div></div>").attr("id", "info")
             popup = $("<div></div>").attr("id", "popup")
             
-            mapDiv.append(info)
             mapDiv.append(popup)
             $("#data-preview2").empty()
             $("#data-preview2").append(mapDiv)
@@ -469,10 +471,11 @@ this.ckan.module('olpreview2', function (jQuery, _) {
                 maxZoom: 18,
             };
             this.map = PublicaMundi.map(options);
+            this.map.setLayerControl(this.map.getLayers()[0]);
                 
             // Popup showing the position the user clicked
             // TODO: make this accessible through the API
-            popup = this.map.addOverlay(document.getElementById('popup'))
+            popup = this.map.addOverlay(document.getElementById('popup'));
 
             //popup = new ol.Overlay({
             //   element: document.getElementById('popup')

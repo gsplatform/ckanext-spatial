@@ -16,14 +16,17 @@
     PublicaMundi.define('PublicaMundi.Leaflet.Layer');
 
     PublicaMundi.Leaflet.Layer.KML = PublicaMundi.Class(PublicaMundi.Layer, {
-        setLayerExtent: function() {
+        //TODO: not yet supported
+        fitToMap: function() {
 
         },
 
         
-       addToControl: function() { 
+       _addToControl: function() { 
 
-            this.getMap()._getLayerControl().addOverlay(this._layer, this._options.title);
+            if (this._map.getLayerControl()){
+                this._map.getLayerControl().addOverlay(this._layer, this._options.title);
+                }
             },
  
         initialize: function (options) {
@@ -62,7 +65,7 @@
                         layer.on({
                             click: onClick
                         });
-                        layer.bindPopup(feature.properties.name);    
+                        //layer.bindPopup(feature.properties.name);    
                     }
                 },
          

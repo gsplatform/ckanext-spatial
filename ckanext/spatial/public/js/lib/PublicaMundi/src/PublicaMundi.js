@@ -360,7 +360,6 @@
         // Load default scripts
         if (!PublicaMundi.resolveFramework()) {
             console.log('Loading scripts...');
-
             $('<link/>', {
                 rel: 'stylesheet',
                 type: 'text/css',

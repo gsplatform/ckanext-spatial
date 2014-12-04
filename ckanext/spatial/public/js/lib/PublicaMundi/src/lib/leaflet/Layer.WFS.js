@@ -15,12 +15,14 @@
     PublicaMundi.define('PublicaMundi.Leaflet.Layer');
 
     PublicaMundi.Leaflet.Layer.WFS = PublicaMundi.Class(PublicaMundi.Layer, {
-        addToControl: function() {
+        _addToControl: function() {
             var map = this._map;
             var title = this._options.title;
-            map._getLayerControl().addOverlay(this._layer, title);
+            if (map.getLayerControl()){
+                map.getLayerControl().addOverlay(this._layer, title);
+            }
         },
-        setLayerExtent: function() {
+        fitToMap: function() {
             var layer = this;
             //this._layer.once('layeradd', function(){
                 this._map.setExtent(layer._extent, 'EPSG:4326');
@@ -30,7 +32,7 @@
             var bbox = this._map._getViewBox();
             $.ajax({
                 type: "GET",
-                url: this._options.url+ '&bbox=' + bbox + ',EPSG:3857',
+                url: this._options.url + '?service=WFS&request=GetFeature&typename=' + this._options.params.layers + '&srsname=EPSG:4326' + '&outputFormat=json' +'&bbox=' + bbox + ',EPSG:3857',
                 dataType: 'json',
                 context: this,
                 success: function (response) {
@@ -49,7 +51,7 @@
                 onClick = function (e) {
                     options.click([e.target.feature.properties], [e.latlng.lat * (6378137), e.latlng.lng* (6378137)]);
                 };
-            };
+            }
             this._layer = L.geoJson(null, {
                 style: {
                     color: '#3399CC',
@@ -74,12 +76,12 @@
                         layer.on({
                             click: onClick
                         });
-                    if (feature.properties.name){
-                        layer.bindPopup(feature.properties.name);    
-                    }
-                    else {
-                        layer.bindPopup(JSON.stringify(feature));
-                    }
+                    //if (feature.properties.name){
+                    //    layer.bindPopup(feature.properties.name);    
+                   // }
+                    //else {
+                    //    layer.bindPopup(JSON.stringify(feature));
+                    //}
                     }
 
                 }

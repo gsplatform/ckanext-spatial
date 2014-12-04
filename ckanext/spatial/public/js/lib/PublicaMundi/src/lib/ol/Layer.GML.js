@@ -86,7 +86,7 @@
                             //console.log('FAILURE');
                             //console.log(response);
                         }
-                    } )
+                    } );
 
                      }, 
                     });
@@ -109,11 +109,11 @@
                 //vectorSource.addFeatures(vectorSource.readFeatures(response));
                 console.log(vectorSource.readFeatures(response));
                 vectorSource.addFeatures(vectorSource.readFeatures(response));
-                }
+                };
 
 
         },
-        setLayerExtent: function() {
+        fitToMap: function() {
             var layer = this;
             this._layer.once('postcompose', function() {
                 console.log('postcompose');

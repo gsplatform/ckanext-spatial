@@ -18,8 +18,15 @@
             this._map.addOverlay(popup);
             return popup;
         },
+        getOverlayElement: function(popup){
+            return popup.getElement();
+        },
+        setOverlayPosition: function(popup, pixel){
+            popup.setPosition(pixel);
+        },
+
         setExtent: function(extent, proj) {
-            if (extent == null) {
+            if (extent === null) {
                 return;
             }
             var transformation;    
@@ -152,7 +159,7 @@
         
 
         },
-        _setLayerControl: function(control) {
+        setLayerControl: function(control) {
             this._control = new ol.control.LayerSwitcher();
             this._map.getControls().extend([this._control]);
 
@@ -168,7 +175,7 @@
         _listen: function() {
             var map = this;
             var idx = 0;
-            this._setLayerControl(this._map.getLayers()[0]);
+            //this._setLayerControl(this._map.getLayers()[0]);
 
             this._map.on('moveend', function() {
                 map._setViewBox();

@@ -15,13 +15,15 @@
     PublicaMundi.define('PublicaMundi.Leaflet.Layer');
 
     PublicaMundi.Leaflet.Layer.WMS = PublicaMundi.Class(PublicaMundi.Layer, {
-        addToControl: function() { 
+        _addToControl: function() { 
             var map = this._map;
             var title = this._options.title;
-                map._getLayerControl().addOverlay(this._layer, title);
+              if (map.getLayerControl()){
+                map.getLayerControl().addOverlay(this._layer, title);
+                }
             },
         
-        setLayerExtent: function() {
+        fitToMap: function() {
             var layer = this;
             this._layer.on('load', function() {
                 layer.getMap().setExtent(layer._extent, 'EPSG:4326');
@@ -31,7 +33,7 @@
         initialize: function (options) {
             PublicaMundi.Layer.prototype.initialize.call(this, options);
             this._layer = L.tileLayer.wms(options.url, {
-                layers: options.params.LAYERS,
+                layers: options.params.layers,
                 format: 'image/png',
                 transparent: true
             });
