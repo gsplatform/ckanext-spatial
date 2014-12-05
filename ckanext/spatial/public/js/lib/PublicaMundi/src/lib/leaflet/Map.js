@@ -20,20 +20,22 @@
             };
     
     PublicaMundi.Leaflet.Map = PublicaMundi.Class(PublicaMundi.Map, {
-        // Attempt to unify adding overlays
+        // Attempt to unify info overlays
         addOverlay: function(element) {
-            //console.log('in add overlay');
-            //});
-            //this._map.addOverlay(popup);
-            //return popup;
-            return null;
-
-            //popup = this.map.addOverlay(document.getElementById('popup'))
-
-            //popup = new ol.Overlay({
-            //   element: document.getElementById('popup')
-            //   });
-            //   this.map._map.addOverlay(popup);
+            var popup = new L.popup({className:'hideparent', closeButton:false}).setLatLng([0,0]);
+            popup.setContent(element);
+            //this._map.addLayer(popup);
+            popup.addTo(this._map);
+            this._popup = popup;
+            return popup;
+        },
+        getOverlayElement: function(popup){
+            return popup.getContent();
+        },
+        setOverlayPosition: function(popup, pixel){
+            var npx = [ pixel[0]/(6378137), pixel[1]/(6378137) ];
+            popup.setLatLng(npx);
+            //popup.setPosition(pixel);
         },
         initialize: function (options) {
             PublicaMundi.Map.prototype.initialize.call(this, options);
@@ -49,7 +51,9 @@
                     zoom: options.zoom,
                     maxZoom: options.maxZoom,
                     minZoom: options.minZoom,
-                    attributionControl: false
+                    attributionControl: false,
+                    closePopupOnClick: false
+
                 });
             }
             this._listen();
@@ -87,10 +91,10 @@
         },
         addLayer: function (layer) {
             this._map.addLayer(layer.getLayer());
-            layer.addToControl();
+            layer._addToControl();
         },
         setExtent: function (extent, proj){
-            if (extent == null) {
+            if (extent === null) {
                 return;
             }
             var transformation;    
@@ -111,14 +115,14 @@
         _listen: function() { 
             var map = this;
             var idx = 0;
-            this._setLayerControl();
+            //this._setLayerControl();
 
 
             this._map.on('moveend', function() {
                 map._setViewBox();
                 var layers = map.getLayers();
                 //update each layer on mouse pan or zoom
-                $_.each(layers, function(layer, idx) {
+                $.each(layers, function(idx, layer) {
                     layer.update(); 
                 });
 
@@ -133,7 +137,7 @@
                 this._viewbox = southWest.x+','+southWest.y+','+northEast.x+','+northEast.y;
 
         },
-        _setLayerControl: function(base) {
+        setLayerControl: function(base) {
             this._control = new L.control.layers();
             this._control.addTo(this._map);
             

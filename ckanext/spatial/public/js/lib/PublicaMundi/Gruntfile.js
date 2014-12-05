@@ -24,17 +24,24 @@ module.exports = function (grunt) {
             },
             openlayers: {
                 src: ['src/lib/ol/PublicaMundi.OpenLayers.js',
+                      '../ol3-layerswitcher/src/ol3-layerswitcher.js',
+                      '../xmlToJson/xmlToJson.js',
                       'src/lib/ol/Map.js',
                       'src/lib/ol/Layer.WMS.js',
+                      'src/lib/ol/Layer.WFS.js',
                       'src/lib/ol/Layer.Tile.js',
+                      'src/lib/ol/Layer.KML.js',
                       'src/lib/ol/Layer.GeoJson.js'],
                 dest: 'build/publicamundi.ol-src.js'
             },
             leaflet: {
                 src: ['src/lib/leaflet/PublicaMundi.Leaflet.js',
+                      '../togeojson/togeojson.js',
                       'src/lib/leaflet/Map.js',
                       'src/lib/leaflet/Layer.WMS.js',
+                      'src/lib/leaflet/Layer.WFS.js',
                       'src/lib/leaflet/Layer.Tile.js',
+                      'src/lib/leaflet/Layer.KML.js',
                       'src/lib/leaflet/Layer.GeoJson.js'],
                 dest: 'build/publicamundi.leaflet-src.js'
             }

@@ -15,39 +15,76 @@
     PublicaMundi.define('PublicaMundi.Leaflet.Layer');
 
     PublicaMundi.Leaflet.Layer.WFS = PublicaMundi.Class(PublicaMundi.Layer, {
-        addToControl: function() {
+        _addToControl: function() {
             var map = this._map;
             var title = this._options.title;
-            map._getLayerControl().addOverlay(this._layer, title);
+            if (map.getLayerControl()){
+                map.getLayerControl().addOverlay(this._layer, title);
+            }
         },
-        setLayerExtent: function() {
+        fitToMap: function() {
             var layer = this;
-            this._map.setExtent(layer._extent, 'EPSG:4326');
+            //this._layer.once('layeradd', function(){
+            //    this._map.setExtent(layer._extent, 'EPSG:4326');
+            //});
         },
         update: function() { 
             var bbox = this._map._getViewBox();
             $.ajax({
                 type: "GET",
-                url: this._options.url+ '&bbox=' + bbox + ',EPSG:3857',
+                url: this._options.url + '?service=WFS&request=GetFeature&typename=' + this._options.params.layers + '&srsname=EPSG:4326' + '&outputFormat=json' +'&bbox=' + bbox + ',EPSG:3857',
                 dataType: 'json',
                 context: this,
                 success: function (response) {
-                    //console.log('SUCCESS');
-                    //console.log(response);
                     this._layer.clearLayers();
                     this._layer.addData(response);
+
+
                 }
             });
         },
         initialize: function (options) {
             PublicaMundi.Layer.prototype.initialize.call(this, options);
             
+            function highlightFeature(e) {
+                   var layer = e.target;
+
+                   layer.setStyle({
+                        opacity: 1,
+                        weight: 3,
+                        color: '#3399CC',
+                   });
+                   if (!L.Browser.ie && !L.Browser.opera) {
+                        layer.bringToFront();
+                   }
+                }
+            var auto = this;
+            function resetHighlight(e) {
+                auto._layer.resetStyle(auto._map._highlight);
+            }
+
+
             var onClick = null;
             if (PublicaMundi.isFunction(options.click)) {
                 onClick = function (e) {
                     options.click([e.target.feature.properties], [e.latlng.lat * (6378137), e.latlng.lng* (6378137)]);
+                
+                if (map._highlight){
+                    if (map._highlight !== e.target){
+                        resetHighlight(e);
+                        map._highlight = e.target;
+                        highlightFeature(e);
+                    }
+                    else{
+                    }
+                }
+                else{
+                    map._highlight = e.target;
+                    highlightFeature(e);
+                }
+                
                 };
-            };
+            }
             this._layer = L.geoJson(null, {
                 style: {
                     color: '#3399CC',
@@ -72,6 +109,12 @@
                         layer.on({
                             click: onClick
                         });
+                    //if (feature.properties.name){
+                    //    layer.bindPopup(feature.properties.name);    
+                   // }
+                    //else {
+                    //    layer.bindPopup(JSON.stringify(feature));
+                    //}
                     }
 
                 }

@@ -1,15 +1,21 @@
- #map-lf{
-  width: 48%;
-  height: 300px;
-  float: left;
+@font-face {
+  font-family: 'ACMuli';
+    src: url('../fonts/ACMuli/AC-Muli.ttf') ; /* Chrome 6+, Firefox 3.6+, IE 9+, Safari 5.1+ */
 }
-
+body{
+    font-family: 'ACMuli';
+}
 #map-ol{
   width: 100%;
-  height: 400px;
+  height: 432px;
   float: left;
 }
 
+.panel li input{
+}
+.panel li label{
+    margin-left: 30px;
+}
  #info, #info2 {
      position: relative;
      height: 1px;

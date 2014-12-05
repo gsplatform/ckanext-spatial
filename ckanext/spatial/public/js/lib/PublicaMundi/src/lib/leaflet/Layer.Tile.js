@@ -15,8 +15,10 @@
 
             this._layer = L.tileLayer(options.url);
         },
-        addToControl: function() { 
-            this.getMap()._getLayerControl().addBaseLayer(this._layer, this._options.title);
+        _addToControl: function() { 
+            if (this._map.getLayerControl()){
+            this._map.getLayerControl().addBaseLayer(this._layer, this._options.title);
+            }
         },
 
     });
