@@ -44,7 +44,6 @@ this.ckan.module('olpreview2', function (jQuery, _) {
             // In case the url shows to our geoserver look for the specific resource layer name (publicamundi:xxxxx)
             if (resource.url.startsWith(GEOSERVER_URL)){
                 console.log('PublicaMundi GEOSERVER');
-                if (resource.vectorstorer_resource){
                     var found = false;
                     $_.each(candidates, function(candidate, idx) {
                         if (candidate["Name"]["#text"] == resource.wfs_layer){
@@ -56,11 +55,8 @@ this.ckan.module('olpreview2', function (jQuery, _) {
                     if (found == false){
                         console.log('oops..layer not found, something wrong here...');
                     }
-                }
-                else{
-                    console.log('resource not proper vector storer resource');
-                }
-            };
+                
+                };
 
             callback(candidates, version, format);
 
@@ -179,7 +175,6 @@ this.ckan.module('olpreview2', function (jQuery, _) {
             
             if (resource.url.startsWith(GEOSERVER_URL)){
                 console.log('PublicaMundi GEOSERVER');
-                if (resource.vectorstorer_resource){
                     var found = false;
                     $_.each(candidates, function(candidate, idx) {
                         if (candidate["Name"] == resource.wms_layer){
@@ -191,11 +186,7 @@ this.ckan.module('olpreview2', function (jQuery, _) {
                     if (found == false){
                         console.log('oops..layer not found, something wrong here...');
                     }
-                }
-                else{
-                    console.log('resource not proper vector storer resource');
-                }
-            };
+                };
 
             callback(candidates, version);
 
