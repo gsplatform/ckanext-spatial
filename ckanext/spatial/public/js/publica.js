@@ -233,13 +233,7 @@ this.ckan.module('olpreview2', function (jQuery, _) {
                             visibility = true;
                         }
                        
-                        console.log('information');
-                        console.log(candidate);
-                        console.log(bbox);
                         var bboxfloat = extractBbox(bbox);
-                        console.log(bboxfloat);
-                        console.log('version');
-                        console.log(version);
                         var mapLayer = {
                             type: PublicaMundi.LayerType.WMS,
                             url: urlBody, // use the original URL for the getMap, as there's no need for a proxy for image request
@@ -373,8 +367,6 @@ this.ckan.module('olpreview2', function (jQuery, _) {
                 //return bboxfloat;
             }
             else if(at["crs"] == "CRS:84") {
-                    console.log('is crs 84');
-                    console.log(at);
                     bboxtemp = [ at["extent"][0], at["extent"][1], at["extent"][2], at["extent"][3] ];
                     //return bboxfloat;
                 }
@@ -387,8 +379,6 @@ this.ckan.module('olpreview2', function (jQuery, _) {
     
     var popup;
     var onFeatureClick = function (features, pixel) {
-            console.log('feature');
-            console.log(features);
             if (features) {
                 feature = features [0];
             }
@@ -402,8 +392,6 @@ this.ckan.module('olpreview2', function (jQuery, _) {
                     
                     // Display name if found, else display full object if json, else display nothing
                     var text;
-                    console.log(feature);
-                    console.log(typeof(feature));
                     if (feature['name']) { 
                         text =feature['name'];
                     }

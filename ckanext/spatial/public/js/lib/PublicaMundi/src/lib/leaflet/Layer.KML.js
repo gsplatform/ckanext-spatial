@@ -38,8 +38,42 @@
 
             var onClick = null;
             if (PublicaMundi.isFunction(options.click)) {
+                
+                function highlightFeature(e) {
+                   var layer = e.target;
+
+                   layer.setStyle({
+                        opacity: 1,
+                        weight: 3,
+                        color: '#3399CC',
+                   });
+                   if (!L.Browser.ie && !L.Browser.opera) {
+                        layer.bringToFront();
+                   }
+                }
+            var auto = this;
+            function resetHighlight(e) {
+                auto._layer.resetStyle(auto._map._highlight);
+            }
+
                 onClick = function (e) {
                     options.click([e.target.feature.properties], [e.latlng.lat * (6378137), e.latlng.lng* (6378137)]);
+                
+                if (map._highlight){
+                    if (map._highlight !== e.target){
+                        resetHighlight(e);
+                        map._highlight = e.target;
+                        highlightFeature(e);
+                    }
+                    else{
+                    }
+                }
+                else{
+                    map._highlight = e.target;
+                    highlightFeature(e);
+                }
+                
+                
                 };
             }
 
@@ -90,7 +124,7 @@
                     var northEast = currextent.getNorthEast();
                     this._extent = [southWest.lng, southWest.lat, northEast.lng, northEast.lat];
                     
-                    this._map.setExtent(this._extent, 'EPSG:4326');
+                    //this._map.setExtent(this._extent, 'EPSG:4326');
 
 
                 }
