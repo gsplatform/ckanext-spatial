@@ -17,44 +17,40 @@
     PublicaMundi.define('PublicaMundi.Leaflet.Layer');
     var popup;
     PublicaMundi.Leaflet.Layer.GeoJson = PublicaMundi.Class(PublicaMundi.Layer, {
-        addToControl: function() { 
-            this._map._getLayerControl().addOverlay(this._layer, this._options.title);
+        _addToControl: function() { 
+            if (this._map.getLayerControl()){
+                this._map.getLayerControl().addOverlay(this._layer, this._options.title);
+                }
             },
-        setLayerExtent: function() {
+        // TODO: not yet supported
+        fitToMap: function() {
             var layer = this;
-            console.log('in layr extent');
-            var extent = [-180,-90,180,90];
-            this._layer.on('layeradd', function() {
-                var currextent = this.getBounds();
-                var southWest = currextent.getSouthWest();
-                var northEast = currextent.getNorthEast();
-                
-                var minx = extent[0];
-                var miny = extent[1];
-                var maxx = extent[2];
-                var maxy = extent[3];
-                
-                if (southWest.lng > extent[0]) {
-                    minx = southWest.lng;
-                }
-                if (southWest.lat > extent[1]) {
-                    miny = southWest.lat;
-                }
-                if (northEast.lng < extent[2]) {
-                    maxx = northEast.lng;
-                }
-                if (northEast.lat < extent[3]) {
-                    maxy = northEast.lat;
-                }
-                layer._extent = [minx, miny, maxx, maxy];
-
-                layer._map.setExtent(layer._extent, 'EPSG:4326');
+           
+             this._layer.on('layeradd', function() {
             });
+
         },
 
 
         initialize: function (options) {
             PublicaMundi.Layer.prototype.initialize.call(this, options);
+
+            function highlightFeature(e) {
+                   var layer = e.target;
+
+                   layer.setStyle({
+                        opacity: 1,
+                        weight: 3,
+                        color: '#3399CC',
+                   });
+                   if (!L.Browser.ie && !L.Browser.opera) {
+                        layer.bringToFront();
+                   }
+                }
+            var auto = this;
+            function resetHighlight(e) {
+                auto._layer.resetStyle(auto._map._highlight);
+            }
 
             if (!PublicaMundi.isDefined(options.projection)) {
                 // TODO : Resolve projection / reproject    
@@ -64,8 +60,23 @@
             if (PublicaMundi.isFunction(options.click)) {
                 onClick = function (e) {
                     options.click([e.target.feature.properties], [e.latlng.lat * (6378137), e.latlng.lng* (6378137)]);
+               
+                if (map._highlight){
+                    if (map._highlight !== e.target){
+                        resetHighlight(e);
+                        map._highlight = e.target;
+                        highlightFeature(e);
                     }
+                    else{
+                    }
+                }
+                else{
+                    map._highlight = e.target;
+                    highlightFeature(e);
+                }
+                               
                 };
+                }
             
             this._layer = L.geoJson(null, {
 
@@ -75,7 +86,8 @@
                     opacity: 1,
                     fillColor: '#FFFFFF',
                     fillOpacity: 0.4
-                }, pointToLayer: function (feature, latlng) {
+                }, 
+                pointToLayer: function (feature, latlng) {
                     return L.circleMarker(latlng, {
                         radius: 5,
                         fillColor: '#FFFFFF',
@@ -83,12 +95,14 @@
                         color: "#3399CC",
                         weight: 1.25,
                         opacity: 1
-                    });
-                }, onEachFeature: function onEachFeature(feature, layer) {
+                    }); 
+                    }, 
+                 onEachFeature: function onEachFeature(feature, layer) {
                     if (PublicaMundi.isFunction(onClick)) {
                         layer.on({
                             click: onClick
                         });
+                    //layer.bindPopup(feature.properties.name);    
                     }
                 },
                 
@@ -100,14 +114,21 @@
                 dataType: 'json',
                 context: this,
                 success: function (response) {
-                    //console.log('response');
-                    //console.log(response);
                     this._layer.addData(response);
-                    //console.log('layer');
-                    //console.log(this._layer);
-                    //this.addToControl();
+                    
+                    // TODO: the following needs to be executed in fitToMap
+                    // Leaflet fires layer add event for each feature in geojson
+                    var currextent = this._layer.getBounds();
+                    var southWest = currextent.getSouthWest();
+                    var northEast = currextent.getNorthEast();
+                    this._extent = [southWest.lng, southWest.lat, northEast.lng, northEast.lat];
+                    
+                    //this._map.setExtent(this._extent, 'EPSG:4326');
+
                 }
             });
+            
+            
         },
 
     });

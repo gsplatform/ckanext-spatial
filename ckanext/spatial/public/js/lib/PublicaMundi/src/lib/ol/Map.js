@@ -10,6 +10,7 @@
     PublicaMundi.define('PublicaMundi.OpenLayers');
 
     PublicaMundi.OpenLayers.Map = PublicaMundi.Class(PublicaMundi.Map, {
+        // Attempt to unify info overlays
         addOverlay: function(element) {
             popup = new ol.Overlay({
                 element: element
@@ -17,8 +18,15 @@
             this._map.addOverlay(popup);
             return popup;
         },
+        getOverlayElement: function(popup){
+            return popup.getElement();
+        },
+        setOverlayPosition: function(popup, pixel){
+            popup.setPosition(pixel);
+        },
+
         setExtent: function(extent, proj) {
-            if (extent == null) {
+            if (extent === null) {
                 return;
             }
             var transformation;    
@@ -35,8 +43,8 @@
                     if (extent[3] > 90.0) {
                         extent[3] = 89.0;
                     }
-                    //console.log(extent);
-                    transformation = ol.proj.transform(extent, 'EPSG:4326', 'EPSG:3857');
+                    transformation = ol.proj.transformExtent(extent, 'EPSG:4326', 'EPSG:3857');
+
             }
             else if (proj == 'EPSG:3857'){
                 transformation = extent;
@@ -44,8 +52,6 @@
             else {
                 transformation = null;
             }
-                //console.log('showing extent');
-                //console.log(transformation);
                 this._map.getView().fitExtent(transformation, this._map.getSize());
         },
         initialize: function (options) {
@@ -56,7 +62,6 @@
             } else {
                 this._map = new ol.Map({
                     target: options.target,
-                    //view: new ol.View2D({
                     view: new ol.View({
                         projection: options.projection,
                         center: options.center,
@@ -64,7 +69,8 @@
                         maxZoom: options.maxZoom,
                         minZoom: options.minZoom
                     }),
-                    controls: ol.control.defaults().extend([
+                    controls: ol.control.defaults({ 
+                        rotate:false}).extend([
                     ]),
                     ol3Logo: false
                 });
@@ -76,9 +82,6 @@
             this._clickHandlerRegisteredLayers = [];
             
             this._map.on('click', function(e) {
-                //console.log(e.coordinate);
-                //transformation = ol.proj.transform(e.coordinate, 'EPSG:3857', 'EPSG:4326');
-                //console.log(transformation);
             });
             if ((typeof options.layers !== 'undefined') && (PublicaMundi.isArray(options.layers))) {
                 for (var index = 0; index < options.layers.length; index++) {
@@ -114,17 +117,61 @@
             if (PublicaMundi.isFunction(layer.getOptions().click)) {
                 this._clickHandlerRegisteredLayers.push(layer);
                 this._clickHandlerLayer.push(layer.getOptions().click);
+                var featureOverlay = new ol.FeatureOverlay({
+                    map: this._map,
+                    style: new ol.style.Style({
+                        stroke: new ol.style.Stroke({
+                            color: 'rgba(51,153,204, 1)',
+                            width: 3
+                        }),
+                        image: new ol.style.Circle({
+                            radius: 6,
+                            stroke: new ol.style.Stroke({
+                                color: 'rgba(51,153,204, 1)',
+                                width: 2})
+                            })
 
+                    })
+                });
+ 
                 if (!PublicaMundi.isFunction(this._clickHandlerMap)) {
                     var layers = this._clickHandlerRegisteredLayers;
                     var handlers = this._clickHandlerLayer;
-
+                    var map = this._map;
                     this._clickHandlerMap = function (e) {
                         var pixel = this._map.getEventPixel(e.originalEvent);
                         var features = [];
-
+                        console.log('map click');
+                        if (map._highlight){
+                            featureOverlay.removeFeature(map._highlight);
+                            map._highlight = undefined;
+                        }
                         var processFeature = function (feature, layer) {
                             if ((layer === layers[l].getLayer()) && (layer.get("visible") === true)) {
+                                console.log('feat');
+                                console.log(feature);
+                                console.log('highlight');
+                                console.log(map._highlight);
+                                if (map._highlight){
+                                    if (map._highlight !== feature){
+                                        console.log('found other');
+                                        featureOverlay.removeFeature(map._highlight);
+                                        map._highlight = feature;
+                                        featureOverlay.addFeature(feature);
+                                    }
+                                    else{
+                                        console.log('found the same');
+                                    }
+                                }
+                                else{
+                                    console.log('found none');
+                                    map._highlight = feature;
+                                    featureOverlay.addFeature(feature);
+                                }
+                                
+
+                                console.log(featureOverlay);
+
                                 var properties = {};
                                 var keys = feature.getKeys();
                                 var geometryName = feature.getGeometryName();
@@ -143,8 +190,7 @@
                             this._map.forEachFeatureAtPixel(pixel, processFeature);
 
                             if (features.length > 0) {
-                                //handlers[l](features, pixel);
-                                
+                                // on map click return handler with features and coordinate information 
                                 handlers[l](features, e.coordinate);
                             }
                         }
@@ -154,10 +200,10 @@
                     this._map.on('singleclick', this._clickHandlerMap, this);
                 }
             }
-            
+        
 
         },
-        _setLayerControl: function(control) {
+        setLayerControl: function(control) {
             this._control = new ol.control.LayerSwitcher();
             this._map.getControls().extend([this._control]);
 
@@ -173,12 +219,7 @@
         _listen: function() {
             var map = this;
             var idx = 0;
-            //console.log('listening');
-            this._setLayerControl(this._map.getLayers()[0]);
-            //this._map.on('layeradd', function() {
-            //    console.log('layer added');
-            //    this._setLayerExtent();
-            //});
+            //this._setLayerControl(this._map.getLayers()[0]);
 
             this._map.on('moveend', function() {
                 map._setViewBox();

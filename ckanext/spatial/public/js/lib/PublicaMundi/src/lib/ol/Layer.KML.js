@@ -26,7 +26,7 @@
                     projection: options.projection,
                     url: options.url
                 }),
-                style: new ol.style.Style({
+               /* style: new ol.style.Style({
                     image: new ol.style.Circle({
                         fill: new ol.style.Fill({
                             color: 'rgba(255,255,255,0.4)'}),
@@ -35,10 +35,10 @@
                             color: 'rgba(51,153,204, 1)',
                             width: 1.25})
                         })
-                })
+                })*/
             });
         },
-        setLayerExtent: function() {
+        fitToMap: function() {
             var layer = this;
             this._layer.once('postcompose', function() {
                 layer._extent = this.getSource().getExtent();
