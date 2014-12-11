@@ -29,21 +29,46 @@ this.ckan.module('olpreview2', function (jQuery, _) {
             
                     response = xmlToJson(response);
                     console.log(response);
-                    var candidates = response["wfs:WFS_Capabilities"]["FeatureTypeList"];
-                    if (typeof candidates === "undefined") {
-                        candidates = response["wfs:WFS_Capabilities"]["wfs:FeatureTypeList"]["wfs:FeatureType"];
-                    }
-                    else{ 
-                        candidates = candidates["FeatureType"];
-                    }
-                    var version = response["wfs:WFS_Capabilities"]["@attributes"]["version"];
                     
-                    var format_vals = response["wfs:WFS_Capabilities"]["ows:OperationsMetadata"]["ows:Operation"];
+                    var base = null;
+                    if (response["wfs:WFS_Capabilities"]){
+                        base = response["wfs:WFS_Capabilities"];
+                    }
+                    else if (response["WFS_Capabilities"]){
+                        base =response["WFS_Capabilities"];
+                    }
+                    else{
+                        return false;
+                    }
+                        
+                    var candidates = [];
+                    if (base["FeatureTypeList"]){
+                        candidates = base["FeatureTypeList"]["FeatureType"];
+                    }
+                    else if (base["wfs:FeatureTypeList"]) {
+                        candidates = base["wfs:FeatureTypeList"]["wfs:FeatureType"];
+                    }
+                    else{
+                        return false;
+                    }
+                   
+                    var version = null
+                    if (base["@attributes"]){
+                        version = base["@attributes"]["version"];
+                    }
+                   
+                    var format_vals = null;
+                    if (base["ows:OperationsMetadata"]){
+                        format_vals = base["ows:OperationsMetadata"]["ows:Operation"];
+                    }
+                    else if (base["OperationsMetadata"]){
+                        format_vals = base["OperationsMetadata"]["Operation"];
+                    }
                 
                     // Check output formats
                     getValue(format_vals, "outputFormat");
 
-                    var format;
+                    var format = null;
                     // If json or application/json found in outputFormat then use that, else select gml based on version
                     if (outputFormat.indexOf('json') > -1 || outputFormat.indexOf('application/json') > -1){
                         format = 'json';
@@ -62,7 +87,7 @@ this.ckan.module('olpreview2', function (jQuery, _) {
                             var found = false;
                             $_.each(candidates, function(candidate, idx) {
                                 if (candidate["Name"]["#text"] == resource.wfs_layer){
-                                    candidates = candidate;
+                                    candidates = [candidate];
                                     found = true;
                                     return false;
                                 }
@@ -72,7 +97,7 @@ this.ckan.module('olpreview2', function (jQuery, _) {
                             }
                         
                         };
-
+                    console.log(candidates);
                     callback(candidates, version, format);
                 },
 
@@ -99,15 +124,20 @@ this.ckan.module('olpreview2', function (jQuery, _) {
             url,
             function(candidates, version, format) {
                 var count = candidates.length;
+                console.log(count);
 
                 $_.each(candidates, function(candidate, idx) {
                     
-                    
-                    var name = candidate["Name"];
-                    if (typeof name === "undefined") {
-                        name = candidate["wfs:Name"];
+                    var name = null;
+                    if (candidate["Name"]){
+                        name = candidate["Name"]["#text"];
                     }
-                    name = name["#text"];
+                    else if (candidate["wfs:Name"]){
+                        name = candidate["wfs:Name"]["#text"];
+                    }
+                    else{
+                        return false;
+                    }
                         
                     var title = resource.name;
                     if (candidate["Title"]){
@@ -146,37 +176,37 @@ this.ckan.module('olpreview2', function (jQuery, _) {
                     }
                     
                     var visibility = false;
-                // If only 1 layer available then make it visible on load
-                if (count == 1){
-                    visibility = true;
-                }
+                    
+                    // If only 1 layer available then make it visible on load
+                    if (count == 1){
+                        visibility = true;
+                    }
                
-                // If there is a layer that matches part of the resource title then make it visible on load
-                if (resource.name.startsWith(title)){
-                    visibility = true;
-                }
+                    // If there is a layer that matches part of the resource title then make it visible on load
+                    if (resource.name.startsWith(title)){
+                        visibility = true;
+                    }
 
-
-                var ftLayer = { 
-                    name: name,
-                    title: title,
-                    visible: visibility,
-                    type: PublicaMundi.LayerType.WFS,
-                    click: onFeatureClick,
-                    url: url,
-                    bbox: bboxfloat,
-                    params: { 
-                            'format': format,
-                            'version': version,
-                            'layers': name, 
-                            //'projection': crs,
-                            //'maxFeatures': '10',
-                    } 
-                };
+                    var ftLayer = { 
+                        name: name,
+                        title: title,
+                        visible: visibility,
+                        type: PublicaMundi.LayerType.WFS,
+                        click: onFeatureClick,
+                        url: url,
+                        bbox: bboxfloat,
+                        params: { 
+                                'format': format,
+                                'version': version,
+                                'layers': name, 
+                                //'projection': crs,
+                                //'maxFeatures': '10',
+                        } 
+                    };
+                
+                    layerProcessor(ftLayer)
             
-                layerProcessor(ftLayer)
-        
-                })
+                    })
         
              })
 }
@@ -205,16 +235,18 @@ this.ckan.module('olpreview2', function (jQuery, _) {
                     console.log('succeeded');
 
                     var response = parser.read(response);
-                    //console.log(response);
+                    console.log(response);
                     var version = response["version"];
                     var candidates = response["Capability"]["Layer"]["Layer"];
-                    
+                   
+                    console.log(candidates);
+
                     if (resource.url.startsWith(GEOSERVER_URL) || resource.url.startsWith(GEOSERVER_URL_ALT)){
                         console.log('PublicaMundi GEOSERVER');
                             var found = false;
                             $_.each(candidates, function(candidate, idx) {
                                 if (candidate["Name"] == resource.wms_layer){
-                                    candidates = candidate;
+                                    candidates = [candidate];
                                     found = true;
                                     return false;
                                 }
@@ -254,6 +286,9 @@ this.ckan.module('olpreview2', function (jQuery, _) {
                     $_.each(candidates, function(candidate, idx) {
                         
                         var name = candidate["Name"];
+                        if (! name){
+                            return false;
+                        }
                         var title = resource.name;
                         if(candidate["Title"]){
                             title = candidate["Title"];
@@ -266,6 +301,7 @@ this.ckan.module('olpreview2', function (jQuery, _) {
                         }
 
                         var visibility = false;
+                        
                         // If only 1 layer available then make it visible on load
                         if (count == 1){
                             visibility = true;
@@ -284,7 +320,6 @@ this.ckan.module('olpreview2', function (jQuery, _) {
                             bbox: bboxfloat,
                             visible: visibility,
                             params: {'layers': name,
-                                     //'TRANSPARENT': 'TRUE',
                                     'VERSION': version
                             
                             },
@@ -372,6 +407,9 @@ this.ckan.module('olpreview2', function (jQuery, _) {
     
     var outputFormat = [];
     function getValue(obj, value) {
+        if (! obj){
+            return false;
+        }
         for (var key in obj) {
             if (obj.hasOwnProperty(key)) {
                 if (obj[key]["name"] == value) {
