@@ -32,7 +32,9 @@
     PublicaMundi.OpenLayers.Layer.WMS = PublicaMundi.Class(PublicaMundi.Layer, {
         initialize: function (options) {
             PublicaMundi.Layer.prototype.initialize.call(this, options);
-
+            
+            console.log('in wms');
+            console.log(options);
             this._map = null;
             this._type = null;
             this._layer = new ol.layer.Tile({
@@ -93,7 +95,10 @@
             console.log('Bbox option found');
             
             this._layer.once('postcompose', function() {
-                layer.getMap().setExtent(layer._extent, 'EPSG:4326');
+                layer.getMap().setExtent(layer._extent, options.bbox_crs?options.bbox_crs:'EPSG:4326');
+                // TODO: need to zoom in some more if zoomin option provided
+                //if (options.zoomin){
+                //}
             });
             }
                

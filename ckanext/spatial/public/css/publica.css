@@ -7,14 +7,35 @@ body{
 }
 #map-ol{
   width: 100%;
-  height: 432px;
+  height: 420px;
   float: left;
+  overflow: hidden;
 }
 
 .panel li input{
 }
 .panel li label{
     margin-left: 30px;
+}
+.panel::-webkit-scrollbar{
+    width:8px;
+    background-color:transparent;
+} 
+.panel::-webkit-scrollbar-thumb{
+    background: #4E59A4;
+    border-radius:0;
+}
+.panel::-webkit-scrollbar-thumb:hover{
+    background: #4E59A4;
+    //border:1px solid #333333;
+}
+.panel::-webkit-scrollbar-thumb:active{
+     background: #4E59A4;
+    //border:1px solid #333333;
+} 
+
+.panel::-webkit-scrollbar-track:hover {
+    border:1px #666 solid;
 }
  #info, #info2 {
      position: relative;
@@ -107,7 +128,7 @@ body{
  }
 
  #data-preview1 .olControlLayerSwitcher .dataLayersDiv, #data-preview2 .olControlLayerSwitcher .dataLayersDiv {
-     max-height: 350px; /* this must be coherent with the map height */
+     //max-height: 350px; /* this must be coherent with the map height */
      overflow-y: auto;
  }
 
