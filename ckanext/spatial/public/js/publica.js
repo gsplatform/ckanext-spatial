@@ -5,8 +5,12 @@ this.ckan.module('olpreview2', function (jQuery, _) {
     var proxy = false;
     var GEOSERVER_URL = "http://labs.geodata.gov.gr/geoserver";
     var GEOSERVER_URL_ALT = "http://geoserver.dev.publicamundi.eu:8080/geoserver";
-   
-     
+    var RASDAMAN_URL = "http://labs.geodata.gov.gr/rasdaman/ows/wms13"; 
+    var RASDAMAN_URL_ALT = "http://rasdaman.dev.publicamundi.eu:8080/rasdaman/ows/wms13"; 
+    //var KTIMA_URL = "http://gis.ktimanet.gr/wms";
+    
+    var PROJECTION = "EPSG:3857";
+
     var parseWFSCapas = function(resource, url, callback, failCallback) {
         console.log(url);
         //url = url.split('?')[0]
@@ -234,18 +238,64 @@ this.ckan.module('olpreview2', function (jQuery, _) {
                 success: function(response) {
                     console.log('succeeded');
 
-                    var response = parser.read(response);
-                    console.log(response);
-                    var version = response["version"];
-                    var candidates = response["Capability"]["Layer"]["Layer"];
-                   
-                    console.log(candidates);
+                    var response = xmlToJson(response);
+                    //console.log('xmlToJson parsed response');
+                    //console.log(response2);
 
-                    if (resource.url.startsWith(GEOSERVER_URL) || resource.url.startsWith(GEOSERVER_URL_ALT)){
-                        console.log('PublicaMundi GEOSERVER');
+                    //var response = parser.read(response);
+                    //console.log('ol parsed response');
+                    console.log(response);
+                    //var version = response["version"];
+                    var base = null;
+                    if (response["WMS_Capabilities"]){
+                        base = response["WMS_Capabilities"];
+                    }
+                    else if (response["WMT_MS_Capabilities"]){
+                        base = response["WMT_MS_Capabilities"];
+                        if (base instanceof Array){
+                            $_.each(base, function(node, idx) {
+                                if (node["Capability"]){
+                                    base = node;
+                                    return false;
+                                }
+                            });
+                            }
+                    }
+                    if (!base["@attributes"]){
+                        return false;
+                    }
+                    var version = base["@attributes"]["version"];
+                    
+                    var candidates = [];
+                    //if (response["Capability"]["Layer"]["Layer"]){
+                    //    candidates = response["Capability"]["Layer"]["Layer"];
+                    //}
+                    //else if (response["Capability"]["Layer"]) {
+                    //    console.log('layer is');
+                    //    console.log(response["Capability"]["Layer"]);
+                    //    candidates = [response["Capability"]["Layer"]];
+                    //}
+
+                    //No layers so quit
+                    if (! base["Capability"]["Layer"]){
+                        return false;
+                    }
+                    if (base["Capability"]["Layer"]["Layer"]){
+                        candidates = base["Capability"]["Layer"]["Layer"];
+                        }
+                    else if (base["Capability"]["Layer"]) {
+                        console.log('layer is');
+                        console.log(base["Capability"]["Layer"]);
+                        candidates = base["Capability"]["Layer"];
+                    }
+                    if (!(candidates instanceof Array)){
+                        candidates = [candidates];
+                    }
+                    if (resource.url.startsWith(GEOSERVER_URL) || resource.url.startsWith(GEOSERVER_URL_ALT) || resource.url.startsWith(RASDAMAN_URL) || resource.url.startsWith(RASDAMAN_URL_ALT)){
+                        console.log('PublicaMundi GEOSERVER/Rasdaman server');
                             var found = false;
                             $_.each(candidates, function(candidate, idx) {
-                                if (candidate["Name"] == resource.wms_layer){
+                                if (candidate["Name"]["#text"] == resource.wms_layer){
                                     candidates = [candidate];
                                     found = true;
                                     return false;
@@ -272,34 +322,69 @@ this.ckan.module('olpreview2', function (jQuery, _) {
         
         var parsedUrl = resource.url.split('#')
         var urlBody = parsedUrl[0].split('?')[0] // remove query if any
-        var url = resource.proxy_service_url || urlBody
+        var url = resource.proxy_service_url
+
+        var url = resource.proxy_service_url || parsedUrl[0]
 
         var layerName = parsedUrl.length>1 && parsedUrl[1]
-       
+      
+        //TODO: Find some way to support ktima net (needs 900913 projection)
+        //if (urlBody.startsWith(KTIMA_URL)){
+        //    PROJECTION = "EPSG:900913";
+        //}
         parseWMSCapas(
             resource,
             url,
             function(candidates, version) {
                 var count = candidates.length;
+                var zoomin = false;
+                if (url.startsWith(RASDAMAN_URL) || url.startsWith(RASDAMAN_URL_ALT)){
+                    zoomin = true;
+                }
 
                     // Parse each WMS layer found
                     $_.each(candidates, function(candidate, idx) {
+                        console.log('candidate');
+                        console.log(candidate);       
                         
-                        var name = candidate["Name"];
-                        if (! name){
+                        var name = null;
+                        if (candidate["Name"]){
+                            name = candidate["Name"]["#text"];
+                        }
+                        else if (candidate["wms:Name"]){
+                            name = candidate["wms:Name"]["#text"];
+                        }
+                        else{
                             return false;
                         }
+                            
                         var title = resource.name;
-                        if(candidate["Title"]){
-                            title = candidate["Title"];
+                        if (candidate["Title"]){
+                            title = candidate["Title"]["#text"];
                         }
+                        else if (candidate["wms:Title"]){
+                            title = candidate["wms:Title"]["#text"];
+                        }                    
+
                         var bbox = null;
                         var bboxfloat = null;
+                        var crs = null;
                         if (candidate["BoundingBox"]){
                             bbox = candidate["BoundingBox"];
-                            bboxfloat = extractBbox(bbox);
+                            ret_dict = extractBbox(bbox);
+                            bboxfloat = ret_dict['bbox'];
+                            crs = ret_dict['crs'];
                         }
-
+                        else if (candidate["wms:BoundingBox"]){
+                            bbox = candidate["wms:BoundingBox"];
+                            ret_dict = extractBbox(bbox);
+                            bboxfloat = ret_dict['bbox'];
+                            crs = ret_dict['crs'];
+                        }
+                        console.log('bbox');
+                        console.log(bboxfloat);
+                        console.log(crs);
+                        
                         var visibility = false;
                         
                         // If only 1 layer available then make it visible on load
@@ -318,11 +403,12 @@ this.ckan.module('olpreview2', function (jQuery, _) {
                             name: name,
                             title: title,
                             bbox: bboxfloat,
+                            bbox_crs: crs,
+                            zoomin: zoomin,
                             visible: visibility,
-                            params: {'layers': name,
+                            params: {'LAYERS': name,
                                     'VERSION': version
-                            
-                            },
+                                    },
                         };
 
                         layerProcessor(mapLayer)
@@ -437,24 +523,38 @@ this.ckan.module('olpreview2', function (jQuery, _) {
     String.prototype.startsWith = function(str){
         return this.indexOf(str) == 0;
     }
-
     var extractBbox = function (bbox) {
         var bboxtemp= null;
-        //$_.each(candidates, function(candidate, idx) {
-        $_.each(bbox, function(at, idx) {
-            if(at["crs"] == "EPSG:4326") {
-                bboxtemp = [ at["extent"][1], at["extent"][0], at["extent"][3], at["extent"][2] ];
-                //return bboxfloat;
+        var crs = null;
+        var dict = {};
+        
+        $.each(bbox, function(idx, at) {
+            console.log('at');
+            console.log(at);
+            if (at["@attributes"]){
+                at = at['@attributes'];
             }
-            else if(at["crs"] == "CRS:84") {
-                    bboxtemp = [ at["extent"][0], at["extent"][1], at["extent"][2], at["extent"][3] ];
-                    //return bboxfloat;
+            if(at.CRS == "EPSG:4326") {
+                bboxtemp = [ parseFloat(at.miny), parseFloat(at.minx), parseFloat(at.maxy) , parseFloat(at.maxx) ];
+                crs = "EPSG:4326";
+            }
+            else if(at.CRS == "CRS:84") {
+                bboxtemp = [ parseFloat(at.minx), parseFloat(at.miny), parseFloat(at.maxx), parseFloat(at.maxy) ];
+                crs = "EPSG:4326";
                 }
-        });
-        return bboxtemp;
-    }
+            else if(at.CRS == "EPSG:3857") {
+                bboxtemp = [ parseFloat(at.minx), parseFloat(at.miny), parseFloat(at.maxx), parseFloat(at.maxy) ];
+                crs = "EPSG:3857";
+                }
+            dict['bbox'] = bboxtemp;
+            dict['crs'] = crs;
 
+        
+        });
+        return dict;
+    };
     
+
     // Handle click with overlay
     
     var popup;
@@ -535,7 +635,10 @@ this.ckan.module('olpreview2', function (jQuery, _) {
                 target: 'map-ol',
                 center: [-985774, 4016449],
                 zoom: 1.6,
-                projection: 'EPSG:900913',
+                //projection: 'EPSG:900913',
+                //projection: 'EPSG:3857',
+                //projection: 'EPSG:4326',
+                projection: PROJECTION,
                 layers: baseLayers,
                 minZoom: 1,
                 maxZoom: 18,
