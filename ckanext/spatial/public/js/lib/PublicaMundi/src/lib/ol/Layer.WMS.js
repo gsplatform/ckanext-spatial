@@ -97,8 +97,10 @@
             this._layer.once('postcompose', function() {
                 layer.getMap().setExtent(layer._extent, options.bbox_crs?options.bbox_crs:'EPSG:4326');
                 // TODO: need to zoom in some more if zoomin option provided
-                //if (options.zoomin){
-                //}
+                if (options.zoomin){
+                    console.log('zoomin option found');
+                    layer.getMap().setZoom(layer.getMap().getZoom()+1.5);
+                }
             });
             }
                

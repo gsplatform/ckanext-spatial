@@ -7,9 +7,8 @@ this.ckan.module('olpreview2', function (jQuery, _) {
     var GEOSERVER_URL_ALT = "http://geoserver.dev.publicamundi.eu:8080/geoserver";
     var RASDAMAN_URL = "http://labs.geodata.gov.gr/rasdaman/ows/wms13"; 
     var RASDAMAN_URL_ALT = "http://rasdaman.dev.publicamundi.eu:8080/rasdaman/ows/wms13"; 
-    //var KTIMA_URL = "http://gis.ktimanet.gr/wms";
+    var KTIMA_URL = "http://gis.ktimanet.gr/wms";
     
-    var PROJECTION = "EPSG:3857";
 
     var parseWFSCapas = function(resource, url, callback, failCallback) {
         console.log(url);
@@ -42,6 +41,7 @@ this.ckan.module('olpreview2', function (jQuery, _) {
                         base =response["WFS_Capabilities"];
                     }
                     else{
+                        alert("WFS Capabilities error. Could not load layers.");
                         return false;
                     }
                         
@@ -53,6 +53,7 @@ this.ckan.module('olpreview2', function (jQuery, _) {
                         candidates = base["wfs:FeatureTypeList"]["wfs:FeatureType"];
                     }
                     else{
+                        alert("No WFS Features provided in selected endpoint.");
                         return false;
                     }
                    
@@ -140,6 +141,7 @@ this.ckan.module('olpreview2', function (jQuery, _) {
                         name = candidate["wfs:Name"]["#text"];
                     }
                     else{
+                        alert("Layer has no name attribute. Cannot display");
                         return false;
                     }
                         
@@ -246,6 +248,10 @@ this.ckan.module('olpreview2', function (jQuery, _) {
                     //console.log('ol parsed response');
                     console.log(response);
                     //var version = response["version"];
+                    if (response["ServiceExceptionReport"]){
+                        alert("Service Exception Report. Please try again.");
+                        return false;
+                    }
                     var base = null;
                     if (response["WMS_Capabilities"]){
                         base = response["WMS_Capabilities"];
@@ -262,22 +268,16 @@ this.ckan.module('olpreview2', function (jQuery, _) {
                             }
                     }
                     if (!base["@attributes"]){
+                        alert("WMS Capabilities Load Exception. Please try again.");
                         return false;
                     }
                     var version = base["@attributes"]["version"];
                     
                     var candidates = [];
-                    //if (response["Capability"]["Layer"]["Layer"]){
-                    //    candidates = response["Capability"]["Layer"]["Layer"];
-                    //}
-                    //else if (response["Capability"]["Layer"]) {
-                    //    console.log('layer is');
-                    //    console.log(response["Capability"]["Layer"]);
-                    //    candidates = [response["Capability"]["Layer"]];
-                    //}
 
                     //No layers so quit
                     if (! base["Capability"]["Layer"]){
+                        alert("No WMS Layers found in provided endpoint.");
                         return false;
                     }
                     if (base["Capability"]["Layer"]["Layer"]){
@@ -290,6 +290,12 @@ this.ckan.module('olpreview2', function (jQuery, _) {
                     }
                     if (!(candidates instanceof Array)){
                         candidates = [candidates];
+                    }
+                    var zoomin=false;
+
+
+                    if (resource.url.startsWith(RASDAMAN_URL) || resource.url.startsWith(RASDAMAN_URL_ALT)){
+                        zoomin = true;
                     }
                     if (resource.url.startsWith(GEOSERVER_URL) || resource.url.startsWith(GEOSERVER_URL_ALT) || resource.url.startsWith(RASDAMAN_URL) || resource.url.startsWith(RASDAMAN_URL_ALT)){
                         console.log('PublicaMundi GEOSERVER/Rasdaman server');
@@ -306,7 +312,7 @@ this.ckan.module('olpreview2', function (jQuery, _) {
                             }
                         };
 
-                    callback(candidates, version);
+                    callback(candidates, version, zoomin);
                 },
 
                 failure: function(response) {
@@ -328,19 +334,11 @@ this.ckan.module('olpreview2', function (jQuery, _) {
 
         var layerName = parsedUrl.length>1 && parsedUrl[1]
       
-        //TODO: Find some way to support ktima net (needs 900913 projection)
-        //if (urlBody.startsWith(KTIMA_URL)){
-        //    PROJECTION = "EPSG:900913";
-        //}
         parseWMSCapas(
             resource,
             url,
-            function(candidates, version) {
+            function(candidates, version, zoomin) {
                 var count = candidates.length;
-                var zoomin = false;
-                if (url.startsWith(RASDAMAN_URL) || url.startsWith(RASDAMAN_URL_ALT)){
-                    zoomin = true;
-                }
 
                     // Parse each WMS layer found
                     $_.each(candidates, function(candidate, idx) {
@@ -355,6 +353,7 @@ this.ckan.module('olpreview2', function (jQuery, _) {
                             name = candidate["wms:Name"]["#text"];
                         }
                         else{
+                            alert("Layer has no name attribute. Cannot display");
                             return false;
                         }
                             
@@ -529,8 +528,6 @@ this.ckan.module('olpreview2', function (jQuery, _) {
         var dict = {};
         
         $.each(bbox, function(idx, at) {
-            console.log('at');
-            console.log(at);
             if (at["@attributes"]){
                 at = at['@attributes'];
             }
@@ -624,7 +621,10 @@ this.ckan.module('olpreview2', function (jQuery, _) {
             $("#data-preview2").append(mapDiv)
 
             PublicaMundi.noConflict();
-            
+            var projection = "EPSG:3857";
+            if (preload_resource.url.startsWith(KTIMA_URL)){
+                projection = "EPSG:900913";
+            }
             var baseLayers = [{
                         title: 'Open Street Maps',
                         type: PublicaMundi.LayerType.TILE,
@@ -635,10 +635,7 @@ this.ckan.module('olpreview2', function (jQuery, _) {
                 target: 'map-ol',
                 center: [-985774, 4016449],
                 zoom: 1.6,
-                //projection: 'EPSG:900913',
-                //projection: 'EPSG:3857',
-                //projection: 'EPSG:4326',
-                projection: PROJECTION,
+                projection: projection,
                 layers: baseLayers,
                 minZoom: 1,
                 maxZoom: 18,
