@@ -41,6 +41,7 @@ this.ckan.module('olpreview2', function (jQuery, _) {
                         base =response["WFS_Capabilities"];
                     }
                     else{
+                        alert("WFS Capabilities error. Could not load layers.");
                         return false;
                     }
                         
@@ -52,6 +53,7 @@ this.ckan.module('olpreview2', function (jQuery, _) {
                         candidates = base["wfs:FeatureTypeList"]["wfs:FeatureType"];
                     }
                     else{
+                        alert("No WFS Features provided in selected endpoint.");
                         return false;
                     }
                    
@@ -139,6 +141,7 @@ this.ckan.module('olpreview2', function (jQuery, _) {
                         name = candidate["wfs:Name"]["#text"];
                     }
                     else{
+                        alert("Layer has no name attribute. Cannot display");
                         return false;
                     }
                         
@@ -246,6 +249,7 @@ this.ckan.module('olpreview2', function (jQuery, _) {
                     console.log(response);
                     //var version = response["version"];
                     if (response["ServiceExceptionReport"]){
+                        alert("Service Exception Report. Please try again.");
                         return false;
                     }
                     var base = null;
@@ -264,22 +268,16 @@ this.ckan.module('olpreview2', function (jQuery, _) {
                             }
                     }
                     if (!base["@attributes"]){
+                        alert("WMS Capabilities Load Exception. Please try again.");
                         return false;
                     }
                     var version = base["@attributes"]["version"];
                     
                     var candidates = [];
-                    //if (response["Capability"]["Layer"]["Layer"]){
-                    //    candidates = response["Capability"]["Layer"]["Layer"];
-                    //}
-                    //else if (response["Capability"]["Layer"]) {
-                    //    console.log('layer is');
-                    //    console.log(response["Capability"]["Layer"]);
-                    //    candidates = [response["Capability"]["Layer"]];
-                    //}
 
                     //No layers so quit
                     if (! base["Capability"]["Layer"]){
+                        alert("No WMS Layers found in provided endpoint.");
                         return false;
                     }
                     if (base["Capability"]["Layer"]["Layer"]){
@@ -355,6 +353,7 @@ this.ckan.module('olpreview2', function (jQuery, _) {
                             name = candidate["wms:Name"]["#text"];
                         }
                         else{
+                            alert("Layer has no name attribute. Cannot display");
                             return false;
                         }
                             
